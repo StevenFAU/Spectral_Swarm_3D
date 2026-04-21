@@ -209,6 +209,28 @@ whether the probe patterns hold. Reported as a scientific finding about
 embedding choice (snapshot vs. trajectory) at N=40, not as a pipeline
 defect.
 
+**D11. Histogram MI estimator saturates at W=40, d=4, n_bins=8; KSG and
+Gaussian agree strongly.** (Finding from Phase 4 B2b sensitivity sweep,
+5 seeds × 9 estimator×feature combinations, diagnosed by Opus 4.7
+max-effort session.) The histogram estimator's joint symbol space
+(8⁴ = 4096 cells) vastly exceeds W=40 samples, driving plug-in MI to
+its log(W) ≈ 3.69 ceiling regardless of coupling. Observed Φ_spectral
+≈ log(W) × Fiedler-cut-size matches prediction to 3%; histogram
+per-run CV of 0.03 confirms saturation. KSG ↔ Gaussian Spearman ρ =
+1.00 across seeds (window-level 0.75) provides strong cross-estimator
+robustness evidence between the two non-saturated estimators, which
+have independent bias mechanisms (k-NN nonparametric vs. closed-form
+parametric).
+
+*Decision.* KSG retained as primary per B6. Histogram results in
+Phase 4 are reported but interpreted only on sign-of-across-
+condition-differences, not within-condition rank or magnitude. A
+saturation diagnostic (`phi_norm / log(W)`) is added to
+`analyze_sweep.py` to surface per-condition saturation empirically.
+The methodology paper's own statement at line 100 of the phases
+document ("migration from histogram MI appropriate for W=10 to KSG")
+anticipated this exact finding.
+
 ---
 
 ## Repository Organization
