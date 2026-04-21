@@ -198,7 +198,8 @@ def write_markdown(df: pd.DataFrame, sha: str, out_path: Path) -> None:
             )
     else:
         lines.append(
-            f"No (N, embedding) combination produces milling MP_2 / baseline MP_2 ≥ {threshold:.1f}. "
+            f"No (N, embedding) combination produces milling MP_2 / baseline MP_2 "
+            f"≥ {threshold:.1f}. "
             "H2 void detection remains unreliable at all tested sampling densities with both "
             "unaugmented and augmented embeddings at methodology-spec geometry "
             "(L=50, milling_R=11, speed=1.0, vision_radius=10)."
