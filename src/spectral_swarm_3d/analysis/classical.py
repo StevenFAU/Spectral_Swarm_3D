@@ -1,71 +1,63 @@
-"""Classical swarm order parameters for 3D telemetry.
+"""Classical swarm order parameters (B5) — polarization, milling magnitude,
+angular-momentum norm. All functions operate on a single timestep.
 
-Phase 2 implementation target. See SpectralSwarm3DPhases.md §Phase 2 and B5.
-
-Implements:
-  - polarization: mean normalized velocity alignment (scalar in [0, 1]).
-  - milling_score: mean |r_hat x v_hat| using 3D vector cross product magnitude.
-    Reduces to 2D methodology definition (Bailey 2026 §3.6) in the planar limit.
-  - angular_momentum_norm: ||(1/N) sum r_i x v_i|| normalized by run maximum.
-    Captures global rotational coherence; complements milling_score (B5).
+Reduces to Bailey (2026) §3.6 2D definitions in the planar limit (agents
+confined to z=0 with vz=0).
 """
+
+from __future__ import annotations
+
 import numpy as np
 
 
+def _unit(v: np.ndarray, eps: float = 1e-12) -> np.ndarray:
+    """Row-wise unit vectors. Zero-length rows return the zero vector."""
+    norm = np.linalg.norm(v, axis=-1, keepdims=True)
+    safe = np.where(norm > eps, norm, 1.0)
+    out = v / safe
+    return np.where(norm > eps, out, 0.0)
+
+
 def polarization(velocities: np.ndarray) -> float:
-    """Compute swarm polarization (mean heading alignment). Phase 2.
+    """Mean-heading alignment ``||mean(v_hat)||``; scalar in ``[0, 1]``.
 
     Parameters
     ----------
-    velocities : np.ndarray, shape (N, 3)
-        Agent velocity vectors at a single timestep.
-
-    Returns
-    -------
-    float
-        Polarization in [0, 1].
+    velocities : np.ndarray
+        Shape ``(N, d)`` (typically ``d=3``).
     """
-    raise NotImplementedError("Phase 2 — see SpectralSwarm3DPhases.md B5")
+    v = np.asarray(velocities, dtype=np.float64)
+    u = _unit(v)
+    return float(np.linalg.norm(u.mean(axis=0)))
 
 
-def milling_score(positions: np.ndarray, velocities: np.ndarray, center: np.ndarray) -> float:
-    """Compute milling score via 3D cross-product magnitude (B5). Phase 2.
-
-    M(t) = (1/N) sum_i |r_hat_i x v_hat_i|
-
-    Reduces to Bailey (2026) §3.6 scalar 2D definition in the planar limit.
-
-    Parameters
-    ----------
-    positions : np.ndarray, shape (N, 3)
-    velocities : np.ndarray, shape (N, 3)
-    center : np.ndarray, shape (3,)
-        Domain center (typically (L/2, L/2, L/2)).
-
-    Returns
-    -------
-    float
-        Milling score in [0, 1].
+def milling_score_magnitude(
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    center: np.ndarray,
+) -> float:
+    """Mean ``|r_hat × v_hat|`` (3D cross-product magnitude). Reduces to the
+    2D scalar ``|cross|`` value in the planar limit.
     """
-    raise NotImplementedError("Phase 2 — see SpectralSwarm3DPhases.md B5")
+    p = np.asarray(positions, dtype=np.float64)
+    v = np.asarray(velocities, dtype=np.float64)
+    c = np.asarray(center, dtype=np.float64)
+    r = p - c
+    r_hat = _unit(r)
+    v_hat = _unit(v)
+    crosses = np.cross(r_hat, v_hat)
+    return float(np.linalg.norm(crosses, axis=-1).mean())
 
 
 def angular_momentum_norm(
-    positions: np.ndarray, velocities: np.ndarray, center: np.ndarray
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    center: np.ndarray,
 ) -> float:
-    """Compute normalized angular momentum magnitude (B5). Phase 2.
-
-    L = ||(1/N) sum_i r_i x v_i|| / max_over_run
-
-    Parameters
-    ----------
-    positions : np.ndarray, shape (N, 3)
-    velocities : np.ndarray, shape (N, 3)
-    center : np.ndarray, shape (3,)
-
-    Returns
-    -------
-    float
-        Raw angular momentum magnitude (normalization applied in aggregation).
-    """
-    raise NotImplementedError("Phase 2 — see SpectralSwarm3DPhases.md B5")
+    """``||(1/N) Σ r_i × v_i||``. Global rotational coherence (B5 secondary)."""
+    p = np.asarray(positions, dtype=np.float64)
+    v = np.asarray(velocities, dtype=np.float64)
+    c = np.asarray(center, dtype=np.float64)
+    r = p - c
+    L = np.cross(r, v).mean(axis=0)
+    return float(np.linalg.norm(L))
