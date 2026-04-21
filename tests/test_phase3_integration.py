@@ -74,15 +74,18 @@ def test_phase3_augmented_snapshot_has_six_dim_ambient(config, tmp_path: Path):
 
 @pytest.mark.xfail(
     reason=(
-        "H2 milling-shell positive control requires denser sampling than "
-        "methodology-spec N=40 at R=11. Neighbor spacing ~7.3 exceeds the "
-        "R/3 ~3.7 threshold typically needed for reliable H2 void detection. "
-        "Empirical at T=500, seed=0: baseline MP_2 ~0.18 (noise), milling "
-        "MP_2 ~0.07. Diagnostic sweep over (N, embedding) pending — see "
-        "docs/decisions/D9_h2_sampling_density.md. Resolution will pick one "
-        "of: raise N project-wide, flip snapshot_augmented default to true "
-        "for H2-dependent sweeps, or other. Do not relax this assertion "
-        "until the decision is made and documented."
+        "Known limitation, D9 closed (Option 3). Snapshot-H2 Vietoris-Rips "
+        "does not distinguish milling from baseline at methodology-spec N=40: "
+        "shell over-triangulation at ε << shell radius produces null H2 on "
+        "the milling shell, while baseline diffuse clouds produce transient "
+        "spurious H2. Confirmed by sampling-density sweep (commit 59b5184). "
+        "Trajectory-cloud H2 also nulls due to under-coverage in high ambient "
+        "dimension (commit 23a8d4f). Project relies on trajectory-cloud H1 "
+        "at W=80 for milling detection instead. See "
+        "docs/decisions/D9_h2_sampling_density.md Closure section. Do not "
+        "remove this xfail; the assertion is preserved as a documented null "
+        "result and a sentinel against future regressions that would make "
+        "snapshot H2 appear to work for the wrong reason."
     ),
     strict=True,
 )
