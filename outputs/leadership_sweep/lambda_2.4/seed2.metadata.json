@@ -1,0 +1,89 @@
+{
+  "condition": "lambda_2.4",
+  "config": {
+    "L": 50.0,
+    "N": 40,
+    "T": 500,
+    "W": 40,
+    "alignment_rule": "mean",
+    "estimator": "ksg",
+    "feature_set": "kinematic",
+    "fixed_cc_threshold": 6.0,
+    "jam_alpha": 0.5,
+    "jam_t_off": 400,
+    "jam_t_on": 200,
+    "k_ksg": 5,
+    "leader_fraction": 0.2,
+    "leader_strength": 2.4,
+    "leader_waypoint": [
+      40.0,
+      40.0,
+      40.0
+    ],
+    "mi_tie_break_noise": 1e-10,
+    "milling_R": 11.0,
+    "milling_kappa": 0.1,
+    "milling_mu": 0.8,
+    "n_bins_hist": 8,
+    "noise_sigma": 0.05,
+    "scenario": "leader",
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "separation_radius": 2.0,
+    "snapshot_augmented": false,
+    "snapshot_beta": 0.35,
+    "speed": 1.0,
+    "split_t_off": 400,
+    "split_t_on": 200,
+    "split_waypoint_group0": [
+      12.5,
+      37.5,
+      12.5
+    ],
+    "split_waypoint_group1": [
+      37.5,
+      12.5,
+      37.5
+    ],
+    "stride": 5,
+    "tda_maxdim": 2,
+    "vision_radius": 10.0,
+    "w_a": 1.0,
+    "w_c": 0.03,
+    "w_s": 0.015
+  },
+  "environment": {
+    "git_commit": "1dcb009618f3e6c93e0788f36825fb9960114eeb",
+    "hostname": "otacon-B660I-AORUS-PRO-DDR4",
+    "package_versions": {
+      "matplotlib": "3.10.8",
+      "mesa": "3.5.1",
+      "networkx": "3.6.1",
+      "numpy": "2.4.4",
+      "pandas": "3.0.2",
+      "persim": "0.3.8",
+      "pyarrow": "23.0.1",
+      "pyyaml": "6.0.3",
+      "ripser": "0.6.14",
+      "scikit-learn": "1.8.0",
+      "scipy": "1.17.1"
+    },
+    "python_version": "3.12.3",
+    "timestamp": "2026-04-21T21:07:11.125889+00:00"
+  },
+  "estimator": "ksg",
+  "feature_set": "kinematic",
+  "scenario": "leader",
+  "seed": 2,
+  "sweep": "leadership_sweep"
+}
