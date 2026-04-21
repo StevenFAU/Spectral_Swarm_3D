@@ -161,6 +161,54 @@ For calibration: Bailey & Schneider (2025) §3.5 used W=10 with b=3 bins on N=50
 
 **D8. Bottleneck-vs-total-persistence distinction.** *(Methodological honesty.)* Cohen-Steiner et al. (2007) proves that **bottleneck distances** between persistence diagrams are Lipschitz-stable in the Hausdorff distance of the underlying point clouds. **Total persistence** has no comparable stability guarantee — it is a coarser, more noise-sensitive summary. Accordingly: where the two metrics agree on a trend, both are reported. Where they disagree, the bottleneck-distance result is treated as more reliable, and the disagreement is flagged as a finding about metric sensitivity rather than a contradiction. This is already implicit in the 2D code (which reports both); the 3D plan makes the ranking explicit.
 
+**D9. H2 persistence at N=40 does not work as a primary observable.**
+(Finding from Phase 3 diagnostics.) H2 on spatial snapshots of N=40 agents
+on a spherical shell at R=11 with shell thickness ~0.7 puts enclosed voids
+below Rips filtration resolution (shell-thickness-to-radius ratio produces
+over-triangulation before the void's scale is reached; nearest-neighbor
+spacing ~0.17 on a shell of radius ~13). H2 on trajectory clouds at 40
+points in 160–320D ambient space is below coverage threshold for H2
+detection. Neither condition is correctable within reasonable N (even at
+N=160 the ratio is only 1.55) and without methodology deviations (alpha
+complex substitution, which would add a new dependency and a deviation
+from Ripser). H2 is retained as an exploratory observable in Phase 4,
+reported but not used as pass/fail. Classical milling measures (B5) serve
+as the milling-sweep primary positive controls instead.
+
+**D10. Trajectory-cloud TDA is systemically noisy at N=40; spatial-snapshot
+TDA is the working alternative.** (Finding from Phase 3.5 probe; 3 seeds ×
+3 scenarios on `none`, `split_merge`, `jamming` at default parameters.)
+
+*Negative finding — trajectory clouds.* `traj_TP_1` did not reliably
+separate either scenario from baseline. Split-merge was consistently below
+baseline (ratio ~0.67 on 3/3 seeds — wrong direction for a topological-
+event detector). Jamming overlapped baseline entirely. Working mechanistic
+hypothesis: coherent flocking at calibrated w_a=1.0 produces rich
+trajectory-cloud H1 structure from parallel-curve geometry, which the
+tested perturbations modify without disrupting. The probe did not test
+other trajectory-cloud metrics (`traj_TP_0`, `traj_MP_k`, trajectory
+bottleneck distances) directly; extending the demotion to these metrics
+is the consistent stance at N=40 and avoids asymmetric promotion of
+observables whose underlying measurement approach has been shown
+problematic.
+
+*Positive finding — spatial snapshots.* `snap_TP_1` separates jamming from
+baseline cleanly: per-seed non-overlapping (jamming 1.663–2.071, baseline
+1.322–1.457), 1.14–1.57× ratios. `snap_TP_0` separates split-merge from
+baseline cleanly: 3/3 seeds below baseline (split-merge 72.02–94.10,
+baseline 99.30–118.64). Split-merge H0 direction is counter-intuitive;
+mechanism (possibly fast H0 collapse from tight leader-group compactness)
+requires investigation with 10-seed Phase 4 data.
+
+*Decision.* Phase 4 demotes trajectory-cloud TDA to exploratory. Phase 4
+promotes `snap_TP_0` and `snap_TP_1` to primary candidate TDA observables;
+D2 bootstrap CIs on 10 seeds formally characterize robustness. The probe
+established signs, not distributions; promotion is to "primary candidate,"
+not "validated primary," until Phase 4's larger-N statistics resolve
+whether the probe patterns hold. Reported as a scientific finding about
+embedding choice (snapshot vs. trajectory) at N=40, not as a pipeline
+defect.
+
 ---
 
 ## Repository Organization
@@ -396,6 +444,23 @@ tests/
 
 ### PHASE 4 — Experimental Sweeps
 
+Phase 3 closed with decision D9 dropping H2 as a primary observable due to
+finite-size geometric limits at N=40 (Cluster D). Phase 3.5 probed H1-on-
+trajectory-clouds scenario-specificity across `none`, `split_merge`, and
+`jamming` at 3 seeds each; its findings restructure the TDA observable
+hierarchy. Trajectory-cloud TDA metrics (`traj_TP_k`, `traj_MP_k`, trajectory
+bottleneck distances) are demoted to exploratory observables due to
+systemic finite-size noise at N=40; reported but not used as pass/fail.
+Spatial-snapshot TDA metrics (`snap_TP_0`, `snap_TP_1`) are promoted to
+primary candidate observables based on per-seed non-overlapping separation
+on the probe scenarios; Phase 4's 10-seed bootstrap CIs will formally
+characterize their robustness. Primary quantitative observables in Phase 4
+are therefore Φ_spectral (all sweeps), classical measures (polarization,
+milling_score, angular_momentum_norm, local_density, LCC fraction), and
+spatial-snapshot TDA (`snap_TP_0`, `snap_TP_1`). TDA noise floors across
+the remaining metrics are characterized through D2 within-run bootstrap
+CIs as part of the sweep output rather than pre-measured.
+
 **Scope.** Port aggregation pipeline and sweep orchestration. Apply C3 sweep parameter changes. Run all 11 sweep families. Add bootstrap CI (D2) within `aggregate_steady_state`.
 
 **Architecture addition.**
@@ -432,10 +497,39 @@ outputs/
 - [ ] All sweep metadata includes D6 reproducibility fields (git hash, Python version, pinned packages, timestamp).
 - [ ] Alignment-rule sensitivity sweep produces both `mean` and `sum` branches cleanly.
 - [ ] 9-condition sensitivity sweep produces all 3 estimator × 3 feature set combinations.
-- [ ] Milling sweep: H1 total persistence increases monotonically with μ (positive control for H1 loop detection).
-- [ ] Milling sweep (3D-specific): `snap_TP_2` increases with μ for μ ≥ 0.4 (positive control for H2 void detection in spherical shell).
-- [ ] Jamming: Φ_spectral during jam window < pre-jam for α=0.2.
-- [ ] Split-merge: at least one metric (Φ_spectral, phi_norm, or snap_TP_0) shows η² > 0.5 between split and control conditions.
+- [ ] Milling sweep (primary): milling_score (mean |r̂ × v̂|) increases
+      monotonically with μ from μ=0 to μ=1.2. Primary classical positive
+      control.
+- [ ] Milling sweep (secondary): angular_momentum_norm increases
+      monotonically with μ over the same range. Secondary classical
+      positive control; global rotational coherence.
+- [ ] Milling sweep (exploratory): snap_TP_2, traj_TP_k, and traj_MP_k
+      reported. Not pass/fail per D9 (H2 geometric limits) and D10
+      (trajectory-cloud noise). Interpretation in Phase 5.
+- [ ] Jamming (primary Φ_spectral): Φ_spectral during jam window < pre-jam
+      for α=0.2.
+- [ ] Jamming (primary TDA candidate): snap_TP_1 at jam condition >
+      snap_TP_1 at control for α=0.2, with non-overlapping 95% bootstrap
+      CIs across 10 seeds. Phase 3.5 showed 1.14–1.57× per-seed separation
+      on 3 seeds; Phase 4 validates whether this holds at larger sample.
+- [ ] Split-merge (primary): at least one of Φ_spectral, phi_norm, or
+      milling_score shows η² > 0.5 between split and control conditions.
+- [ ] Split-merge (primary TDA candidate): snap_TP_0 during split condition
+      differs from control with η² > 0.3 and 95% bootstrap CIs not
+      overlapping. Phase 3.5 showed consistent below-baseline direction on
+      3 seeds; direction is counter-intuitive (splitting swarm produces
+      *lower* H0 persistence than coherent baseline) and mechanism requires
+      investigation in Phase 4. Pass/fail is separation magnitude, not a
+      pre-committed direction.
+- [ ] Non-milling sweeps (leadership, noise, alignment): Φ_spectral and
+      classical measures treated as primary observables. snap_TP_0,
+      snap_TP_1 reported as primary TDA candidates and characterized
+      through D2 bootstrap CIs. Trajectory-cloud metrics reported as
+      exploratory.
+- [ ] Bootstrap CIs (D2) computed and stored for each run's steady-state
+      summary, and for all TDA metrics across conditions. These CIs
+      characterize the TDA noise floor empirically for Phase 5
+      interpretation.
 - [ ] Bootstrap CIs (D2) computed and stored for each run's steady-state summary.
 
 ---
