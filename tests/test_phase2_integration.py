@@ -42,3 +42,6 @@ def test_phase2_integration_baseline(config, tmp_path: Path):
     assert np.all(np.isfinite(phi))
     assert np.all(phi >= -1e-10)
     assert phi.std() > 0.0
+    assert (phi == 0).sum() == 0, (
+        "Fiedler partition produced a zero-MI cut; indicates a degenerate window"
+    )

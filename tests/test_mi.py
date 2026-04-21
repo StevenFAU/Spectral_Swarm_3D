@@ -123,7 +123,7 @@ def test_ksg_matches_analytic_mi(rho):
     analytic = -0.5 * np.log(1.0 - rho * rho)
 
     M_ksg = mi_matrix_ksg(Xs, k=5)
-    assert abs(M_ksg[0, 1] - analytic) < 0.15
+    assert abs(M_ksg[0, 1] - analytic) < 0.10
 
 
 # --------------------------------------------------------------------------

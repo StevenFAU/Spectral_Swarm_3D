@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from spectral_swarm_3d.analysis.classical import (
     angular_momentum_norm,
@@ -13,7 +14,7 @@ from spectral_swarm_3d.analysis.classical import (
 
 def test_polarization_aligned_is_one():
     v = np.tile(np.array([1.0, 0.0, 0.0]), (20, 1))
-    assert polarization(v) == 1.0
+    assert polarization(v) == pytest.approx(1.0, abs=1e-12)
 
 
 def test_polarization_isotropic_near_zero():
@@ -43,7 +44,7 @@ def test_angular_momentum_planar_orbit_high():
     positions = np.column_stack([radius * np.cos(theta), radius * np.sin(theta), np.zeros(N)])
     velocities = np.column_stack([-np.sin(theta), np.cos(theta), np.zeros(N)])
     L = angular_momentum_norm(positions, velocities, center)
-    assert L == 5.0
+    assert L == pytest.approx(5.0, abs=1e-12)
 
 
 def test_angular_momentum_random_velocities_near_zero():

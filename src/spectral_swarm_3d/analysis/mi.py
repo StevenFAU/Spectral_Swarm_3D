@@ -4,8 +4,10 @@ Implements B6 and D3 (Phase 2):
 
   - :func:`standardize_window` — per-agent per-channel z-score within a single
     window. Explicit pipeline step (D3); not buried inside the estimator.
-  - :func:`mi_matrix_ksg` — KSG k-NN estimator (Kraskov et al. 2004 eq. 8),
-    Chebyshev metric, tie-break noise. Primary estimator (methodology §3.4).
+  - :func:`mi_matrix_ksg` — KSG1 k-NN estimator (Kraskov, Stögbauer &
+    Grassberger 2004, 'Estimating Mutual Information', Phys. Rev. E 69,
+    066138, eqs. 5–8), Chebyshev metric, tie-break noise. Primary estimator
+    (methodology §3.4).
   - :func:`mi_matrix_histogram` — quantile-binned joint histogram estimator
     (sensitivity check).
   - :func:`mi_matrix_gaussian` — closed-form Gaussian MI; retained for
@@ -61,7 +63,11 @@ def _add_tie_noise(X: np.ndarray, noise_eps: float, seed: int = 0) -> np.ndarray
 
 
 def _pair_mi_ksg(xi: np.ndarray, xj: np.ndarray, k: int) -> float:
-    """KSG estimator (first variant, Kraskov 2004 eq. 8) for a single pair.
+    """KSG k-NN MI estimator for a single pair of agents.
+
+    Implements the KSG1 variant from Kraskov, Stögbauer & Grassberger (2004),
+    'Estimating Mutual Information', Phys. Rev. E 69, 066138, equations 5–8
+    with Chebyshev (L-infinity) metric per Bailey (2026) §3.4.
 
     Parameters
     ----------
@@ -95,7 +101,7 @@ def _pair_mi_ksg(xi: np.ndarray, xj: np.ndarray, k: int) -> float:
 def mi_matrix_ksg(
     X: np.ndarray, k: int = 5, noise_eps: float = 1e-10, seed: int = 0
 ) -> np.ndarray:
-    """Pairwise KSG MI matrix (Kraskov et al. 2004 eq. 8).
+    """Pairwise KSG1 MI matrix (Kraskov, Stögbauer & Grassberger 2004, eqs. 5–8).
 
     Parameters
     ----------

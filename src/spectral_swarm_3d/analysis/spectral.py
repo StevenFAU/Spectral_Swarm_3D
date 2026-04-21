@@ -72,9 +72,17 @@ def fiedler_bipartition(laplacian: np.ndarray) -> np.ndarray:
 
 
 def phi_spectral(mi_matrix: np.ndarray, partition: np.ndarray) -> float:
-    """Sum of MI edges that cross the ``partition`` bipartition.
+    """Sum of MI edges that crosses the ``partition`` bipartition.
 
-    ``Φ_spectral = Σ_{i<j, part[i] != part[j]} MI[i, j]``.
+    Φ_spectral = Σ_{i<j, part[i] != part[j]} MI[i, j]
+
+    Note: this is an unnormalized sum in nats. Its magnitude scales with
+    (a) the number of cross-cut edges, which for a balanced bipartition of
+    N nodes is (N/2)^2 = N^2/4, and (b) the per-pair MI. For direct
+    cross-N or cross-window comparison, divide by the number of cross-cut
+    edges to obtain a per-edge mean MI. This choice matches the 2D
+    implementation for 2D-to-3D bridging; downstream analysis (Phase 4)
+    may apply normalization as needed.
     """
     W = np.asarray(mi_matrix, dtype=np.float64)
     p = np.asarray(partition).astype(np.int64)
