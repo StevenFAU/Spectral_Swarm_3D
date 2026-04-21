@@ -1,34 +1,63 @@
 """Feature extraction for 3D swarm telemetry.
 
-Phase 2 implementation target. See SpectralSwarm3DPhases.md §Phase 2 and B1.
+Implements B1 (Phase 2). Three feature sets:
 
-Feature sets:
-  - kinematic (d=4): (speed, u_x, u_y, u_z) — unit-velocity encoding avoids
+  - ``kinematic`` (d=4): (speed, u_x, u_y, u_z) — unit-velocity encoding avoids
     pole singularities (direct 3D analog of 2D's (speed, sin_theta, cos_theta)).
-  - vxvyvz (d=3): raw velocity components.
-  - full (d=6): (x, y, z, vx, vy, vz) — extension of 2D's (x, y, vx, vy) set.
-
-B2: primary W=40 at d=4; W=50 recommended for d=6 (larger joint covariance).
+    Uses the already-logged telemetry columns; does not recompute.
+  - ``vxvyvz`` (d=3): raw velocity components.
+  - ``full`` (d=6): (x, y, z, vx, vy, vz).
 """
 
+from __future__ import annotations
 
-def extract_features(telemetry, feature_set: str, W: int, stride: int = 1):
-    """Extract sliding windows of agent features from telemetry. Phase 2.
+import numpy as np
+import pandas as pd
+
+_FEATURE_COLUMNS: dict[str, tuple[str, ...]] = {
+    "kinematic": ("speed", "u_x", "u_y", "u_z"),
+    "vxvyvz": ("vx", "vy", "vz"),
+    "full": ("x", "y", "z", "vx", "vy", "vz"),
+}
+
+
+def extract_features(telemetry_df: pd.DataFrame, feature_set: str) -> np.ndarray:
+    """Extract a ``(T, N, d)`` feature array from telemetry. Implements B1.
 
     Parameters
     ----------
-    telemetry : pd.DataFrame
-        Telemetry CSV loaded as a DataFrame.
+    telemetry_df : pd.DataFrame
+        Per-step telemetry with columns ``step``, ``agent_id`` plus columns
+        required by the selected feature set.
     feature_set : str
-        One of 'kinematic', 'vxvyvz', 'full'.
-    W : int
-        Window length in timesteps.
-    stride : int
-        Stride between successive windows.
+        One of ``"kinematic"``, ``"vxvyvz"``, ``"full"``.
 
     Returns
     -------
-    list of np.ndarray
-        Each element is shape (N, W, d) for one window.
+    np.ndarray
+        Shape ``(T, N, d)`` where ``T`` = number of steps, ``N`` = number of
+        agents, ``d`` depends on ``feature_set``.
     """
-    raise NotImplementedError("Phase 2 — see SpectralSwarm3DPhases.md B1")
+    if feature_set not in _FEATURE_COLUMNS:
+        raise ValueError(
+            f"Unknown feature_set {feature_set!r}; "
+            f"expected one of {sorted(_FEATURE_COLUMNS)}."
+        )
+    cols = _FEATURE_COLUMNS[feature_set]
+
+    df = telemetry_df.sort_values(["step", "agent_id"], kind="stable")
+    T = df["step"].nunique()
+    N = df["agent_id"].nunique()
+    d = len(cols)
+
+    missing = [c for c in cols if c not in df.columns]
+    if missing:
+        raise ValueError(f"Telemetry missing columns for {feature_set!r}: {missing}")
+
+    arr = df[list(cols)].to_numpy(dtype=np.float64, copy=True)
+    if arr.shape[0] != T * N:
+        raise ValueError(
+            f"Telemetry rows ({arr.shape[0]}) do not match T*N = {T * N}; "
+            "expected a complete rectangular (step, agent_id) grid."
+        )
+    return arr.reshape(T, N, d)
