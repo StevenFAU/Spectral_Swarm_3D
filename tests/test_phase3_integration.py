@@ -74,15 +74,15 @@ def test_phase3_augmented_snapshot_has_six_dim_ambient(config, tmp_path: Path):
 
 @pytest.mark.xfail(
     reason=(
-        "Phase 3 spec predicts MP_2(milling) > MP_2(baseline) at T=100 step=50. "
-        "Empirically this fails with N=40 at milling_R=11: 40 points on a "
-        "radius-~13 shell has nearest-neighbor spacing ~7, too sparse for the "
-        "Vietoris-Rips filtration to close the H2 void cleanly. Baseline's "
-        "dense clumping produces larger MP_2 bars. Phenomenon verified at "
-        "T=100 step 50 AND averaged over late steps (300-499) of a T=500 run; "
-        "baseline mean MP_2 ~0.18 vs milling ~0.07. Needs user decision: "
-        "raise N, use augmented (v-sphere) embedding as the E2E positive "
-        "control, or relax the assertion. See CLAUDE.md §Methodology fidelity."
+        "H2 milling-shell positive control requires denser sampling than "
+        "methodology-spec N=40 at R=11. Neighbor spacing ~7.3 exceeds the "
+        "R/3 ~3.7 threshold typically needed for reliable H2 void detection. "
+        "Empirical at T=500, seed=0: baseline MP_2 ~0.18 (noise), milling "
+        "MP_2 ~0.07. Diagnostic sweep over (N, embedding) pending — see "
+        "docs/decisions/D9_h2_sampling_density.md. Resolution will pick one "
+        "of: raise N project-wide, flip snapshot_augmented default to true "
+        "for H2-dependent sweeps, or other. Do not relax this assertion "
+        "until the decision is made and documented."
     ),
     strict=True,
 )
