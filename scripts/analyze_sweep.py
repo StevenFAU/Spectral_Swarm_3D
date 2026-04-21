@@ -381,6 +381,22 @@ def main() -> None:
         elif sweep == "sensitivity":
             _write_sensitivity_summary(per_seed_df, cross_seed_df, outputs_dir)
 
+    # Part D pass/fail evaluation — estimator-agreement interpretation note (D11).
+    # Per D11 (ESTIMATOR_DISAGREEMENT_VERDICT.md): histogram MI at W=40, n_bins=8, d≥4
+    # operates at its log(W) saturation ceiling and has no within-condition signal content.
+    # For the estimator ordering-agreement pass/fail criterion (phases.md line 426),
+    # histogram results are evaluated ONLY on the sign of Φ differences across conditions
+    # (e.g., Φ(condition_A) − Φ(condition_B) > 0 under histogram iff > 0 under KSG).
+    # Within-condition rank correlations and magnitude comparisons between histogram and
+    # KSG/Gaussian are NOT meaningful at this (W, d, n_bins) operating point and must NOT
+    # be used as pass/fail evidence. See ESTIMATOR_DISAGREEMENT_VERDICT.md §Recommendation.
+    print(
+        "\n[Part D — estimator-agreement note]\n"
+        "Histogram MI results interpreted on sign-of-across-condition-differences only "
+        "(D11 / ESTIMATOR_DISAGREEMENT_VERDICT.md). Within-condition histogram ranks "
+        "and magnitudes are saturated artefacts and are excluded from pass/fail evaluation."
+    )
+
     print("analyze_sweep.py complete.")
 
 
