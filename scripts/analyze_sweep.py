@@ -144,6 +144,14 @@ def _aggregate_sweep(
                 for col, val in ss.items():
                     row[f"{col}_mean"] = val
 
+            # Saturation diagnostic per D11: phi_saturation_ratio = phi_norm / log(W).
+            W_run = int(cfg.get("W", 40))
+            phi_norm_val = row.get("phi_norm_mean")
+            if phi_norm_val is not None and np.isfinite(float(phi_norm_val)):
+                row["phi_saturation_ratio"] = float(phi_norm_val) / np.log(W_run)
+            else:
+                row["phi_saturation_ratio"] = float("nan")
+
             per_seed_rows.append(row)
 
     if not per_seed_rows:
