@@ -1,0 +1,60 @@
+# Default 3D simulation parameters (Bailey 2026 + 3D adaptations per SpectralSwarm3DPhases.md)
+# Values marked TBD will be calibrated in Phase 1.
+
+# Swarm
+N: 40
+L: 50.0                   # A2: scaled from 2D L=100 to preserve neighbor count in 3D
+speed: 1.0
+vision_radius: 10.0
+separation_radius: 2.0
+
+# Boids weights (B6, A6: mean alignment restored; w_a recalibrated in Phase 1)
+w_c: 0.03
+w_a: 1.0                  # TBD — calibrated in Phase 1 under mean alignment
+w_s: 0.015
+alignment_rule: "mean"    # A6: methodology-spec. Alternative: "sum" for sensitivity sweep
+
+# Noise
+noise_sigma: 0.05
+
+# Leadership (A5 3D waypoints)
+leader_fraction: 0.20
+leader_strength: 0.8
+leader_waypoint: [40.0, 40.0, 40.0]      # 0.8L diagonal
+split_waypoint_group0: [12.5, 37.5, 12.5]   # 3D diagonal-opposite cube corners
+split_waypoint_group1: [37.5, 12.5, 37.5]
+
+# Jamming (A2 scaled)
+jam_alpha: 0.5
+jam_t_on: 200
+jam_t_off: 400
+fixed_cc_threshold: 6.0   # A2: 12.0 in 2D at L=100 -> 6.0 in 3D at L=50 (r/L=0.12)
+
+# Split-merge
+split_t_on: 200
+split_t_off: 400
+
+# Milling (A3 velocity-projected tangent; A2 R scaled; methodology mu values in sweeps)
+milling_mu: 0.8
+milling_R: 11.0           # A2: scaled from 2D R=22 at L=100
+milling_kappa: 0.1
+
+# Run
+T: 500
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+# Phase 2 — analysis
+W: 40                     # B2: primary window length at d=4 (d=6 uses W=50)
+stride: 1
+feature_set: "kinematic"  # B1: (speed, u_x, u_y, u_z) at d=4
+
+# Phase 2 — MI estimator (B6: KSG primary per methodology §3.4)
+estimator: "ksg"          # Options: "ksg" | "histogram" | "gaussian"
+k_ksg: 5
+n_bins_hist: 8
+mi_tie_break_noise: 1.0e-10
+
+# Phase 3 — TDA (B4: maxdim=2 for H2 void detection)
+tda_maxdim: 2
+snapshot_augmented: false # B3: methodology §3.5 augmented embedding. Flip to true for robustness runs
+snapshot_beta: 0.35

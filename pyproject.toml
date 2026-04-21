@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spectral_swarm_3d"
+version = "0.1.0"
+requires-python = ">=3.12"
+description = "3D extension of the Spectral Swarm spectral-topological pipeline."
+dependencies = [
+    "mesa>=3.4",
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "scikit-learn>=1.5",
+    "ripser>=0.6.8",
+    "persim>=0.3.5",
+    "pandas>=2.2",
+    "pyarrow>=17.0",
+    "pyyaml>=6.0",
+    "matplotlib>=3.9",
+    "networkx>=3.3",
+    "ffmpeg-python>=0.2",
+]
+
+[project.optional-dependencies]
+dev = ["ruff>=0.6", "pytest>=8.0"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
