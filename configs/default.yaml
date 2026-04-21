@@ -10,7 +10,7 @@ separation_radius: 2.0
 
 # Boids weights (B6, A6: mean alignment restored; w_a recalibrated in Phase 1)
 w_c: 0.03
-w_a: 1.0                  # TBD — calibrated in Phase 1 under mean alignment
+w_a: 1.0                  # A6: calibrated Phase 1 — 10/10 seeds reach polarization > 0.6 within 200 steps under mean alignment
 w_s: 0.015
 alignment_rule: "mean"    # A6: methodology-spec. Alternative: "sum" for sensitivity sweep
 
