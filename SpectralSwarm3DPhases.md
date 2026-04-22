@@ -231,6 +231,36 @@ The methodology paper's own statement at line 100 of the phases
 document ("migration from histogram MI appropriate for W=10 to KSG")
 anticipated this exact finding.
 
+**D12. angular_momentum_norm is not a valid secondary milling criterion
+in 3D.** Unlike 2D, 3D milling does not break rotational symmetry
+around a single axis — agents occupy orbital shells without a shared
+rotation plane, so the vector sum Σ rᵢ × vᵢ cancels across orbital
+planes even when per-agent rotational motion is strong.
+milling_score = mean(|r̂ᵢ × v̂ᵢ|) correctly captures axis-agnostic
+rotational alignment and increases monotonically with μ (0.795→0.999
+across μ ∈ {0, 0.4, 0.8, 1.2}); angular_momentum_norm decreases
+(16.7→12.0) because axes cancel.
+
+*Decision.* Retain milling_score as the milling validation criterion;
+demote angular_momentum_norm from pass/fail to exploratory. The
+3D-specific geometric cancellation is a feature of the coordinate
+change, not a failure of the simulation.
+
+**D13. snap_TP_0 split-merge direction does not replicate at 10
+seeds.** Phase 3.5 probe (3 seeds) showed snap_TP_0 below baseline
+for split-merge scenarios, which prompted the revised Phase 4 pass/fail
+to test η²>0.3 with non-overlapping CIs rather than a pre-committed
+direction. Phase 4 (10 seeds) shows sm=88.3±23.3 vs ctrl=84.1,
+η²=0.013, with control variance spanning 35.5–118.6. The small-n
+Phase 3.5 direction was not a robust signal.
+
+*Decision.* snap_TP_0 is not a robust TDA observable for split-merge
+scenarios at this simulation scale. Phase 5 does not make a directional
+claim for split-merge snap_TP_0. This does not affect the primary
+jamming result (snap_TP_1 passes cleanly). The Phase 4.5 mechanism
+probe (which was conditional on 10-seed replication) is deferred
+indefinitely.
+
 ---
 
 ## Repository Organization
