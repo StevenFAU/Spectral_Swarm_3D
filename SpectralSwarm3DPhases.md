@@ -261,6 +261,35 @@ jamming result (snap_TP_1 passes cleanly). The Phase 4.5 mechanism
 probe (which was conditional on 10-seed replication) is deferred
 indefinitely.
 
+**D14. Compressibility mechanism (Bailey & Schneider 2025 §4.2–§4.3)
+predicts Φ_spectral inversions at regimes of low within-window dynamic
+amplitude.** Two empirical instances confirmed in Phase 4: (i)
+alignment_sweep (anticipated by C1); (ii) jamming_sweep (A2 diagnostic,
+commit cc23aa9). Mechanism: Φ_spectral measures within-window
+informational dependence; coherent low-dynamics regimes bimodalize Φ
+across windows (steady-flight windows collapse to low MI, wobble/turn
+windows reach high MI) so the mean drops below moderately-disordered
+regimes. At α=0.2, the MI matrix is uniformly elevated (ρ(MI,
+−distance) = 0.10, Fiedler/kmeans-2 spatial agreement = 0.50); at
+α=1.0, spatially patterned but low-magnitude (ρ(MI, −distance) =
+0.40–0.73, spatial agreement = 0.78). Sonnet's original
+fragmentation-block hypothesis was refuted by direct MI matrix
+inspection. Independent confirmation: phi_norm cross-seed σ = 0.025 at
+α=0.2 vs 0.086 at α=1.0 — jamming regularizes Φ, coherence
+bimodalizes it.
+
+*Phase 5 prediction.* Leadership sweep at high λ should show the same
+inversion: tight leader-group compactness compresses within-window σ
+and pulls mean Φ down despite visible structural organization. This is
+the direct test of compressibility as a general mechanism rather than a
+sweep-specific artifact.
+
+*Reporting requirement.* Phase 5 reports per-window Φ distributions
+(not just steady-state means) for all sweeps exhibiting coherent
+regimes, so the bimodality is visible rather than hidden by
+mean-over-windows aggregation. Cross-seed σ of phi_norm is a secondary
+signal of the same phenomenon.
+
 ---
 
 ## Repository Organization
