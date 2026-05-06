@@ -284,11 +284,50 @@ and pulls mean Φ down despite visible structural organization. This is
 the direct test of compressibility as a general mechanism rather than a
 sweep-specific artifact.
 
-*Reporting requirement.* Phase 5 reports per-window Φ distributions
-(not just steady-state means) for all sweeps exhibiting coherent
-regimes, so the bimodality is visible rather than hidden by
-mean-over-windows aggregation. Cross-seed σ of phi_norm is a secondary
-signal of the same phenomenon.
+*Phase 5 result — Leadership prediction.* Tier 1.A (Session 1, commit
+`9ad6a5a`) tested the leadership prediction across all 10 seeds at λ ∈
+{0.0, 0.8, 1.6, 2.4}. Verdict: Outcome 4. Φ drops dramatically at
+high λ (Φ(λ=0.0) = 135.05 vs Φ(λ=2.4) = 8.73, d = +5.00, CIs
+disjoint) but the mechanism is leader-vs-follower block structure
+(Fiedler⟷leader-membership pair agreement = 1.000 at λ=2.4), not the
+uniformly elevated MI matrix structure that defines compressibility per
+A2. σ_u is not compressed at high λ — it peaks at λ=0.8 (0.70) and is
+roughly equal at λ=0.0 (0.52) and λ=2.4 (0.60). Three of four A2
+reference descriptors fail at λ=2.4 (MI mean 0.19 vs 0.49; ρ(MI,−d)
++0.30 vs +0.10; eigenvalue gap 7.4 vs 18.7). The leadership Φ collapse
+is real but is a different mechanism from compressibility and should
+not be reported as a third compressibility instance.
+
+*Phase 5 result — Coherent-regime bimodality narrowed.* Tier 1.B
+(Session 2, commits `4f821ae` and `7a5b58e`) tested the four Phase5.md
+pre-suspected coherent-regime candidates (alignment w_a=1.8, jamming
+α=1.0, leader λ=0.0, milling μ=0.0) for steady-state per-window Φ
+bimodality. All four are unimodal (dip p ≥ 0.91, KDE mode count = 1).
+The only steady-state bimodal condition in the atlas is alignment
+w_a=0.6 (dip p = 0.102, modes = 2) — the *transitional*
+disorder-to-order regime, not the coherent regime. This is consistent
+with the Bailey & Schneider §4.2 transitional Φ peak; the absence of
+coherent-regime bimodality narrows D14's "coherent low-dynamics regimes
+bimodalize Φ" claim. *Audit cross-reference:* Session 1's leadership
+λ=0.8 bimodality (modes = 2, all-windows pooling) does not reproduce
+on steady-state-only pooling — it was a transient-mixing artifact, not
+within-steady-state bimodality.
+
+*Phase 5 result — Mechanism status.* The compressibility mechanism
+remains the correct theoretical reading of the jamming sweep (A2 commit
+`cc23aa9`). The mechanism description in D14 is preserved. Two
+empirical findings refine the originally-claimed scope: (1) the Phase 4
+alignment_sweep instance is specifically the *transitional* w_a=0.6
+condition (bimodality at the disorder-to-order transition), not a
+coherent-regime instance; (2) the Phase 5 prediction that the mechanism
+would extend to leadership at high λ was tested and not supported.
+Phase 5 reports this as a refined-scope result, not a refutation.
+
+*Reporting requirement.* Per-window Φ distributions are required for
+sweeps spanning the transitional regime; alignment_sweep is the
+canonical case, with w_a=0.6 as the bimodal condition. The Tier 1.B
+atlas at `outputs/tier1_compressibility/distributions/` operationalizes
+this. Cross-seed σ of phi_norm remains a useful secondary signal.
 
 ---
 
