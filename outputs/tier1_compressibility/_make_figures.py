@@ -108,24 +108,52 @@ def render_panel(agg: dict, ts: dict[str, np.ndarray]) -> Path:
     ax.set_yscale("symlog", linthresh=0.5)
     ax.grid(alpha=0.25)
 
-    # ---- (d) per-window Φ histograms ---------------------------------------
+    # ---- (d) per-window Φ histograms — steady-state windows only -----------
+    import diptest as _diptest
+    import pandas as _pd
+    from scipy.signal import argrelextrema as _argrelextrema
+    from scipy.stats import gaussian_kde as _gaussian_kde
+    _SS_Q = 2 / 3
+    _KDE_FRAC = 0.05
+    _KDE_ORD = 5
+
+    def _ss_phi(c: float) -> tuple[np.ndarray, float, int, float]:
+        """Return (pooled_ss_phi, dip_p, mode_count, std_iqr) for one leadership condition."""
+        cond = f"lambda_{c}"
+        cond_dir = REPO_ROOT / "outputs" / "leadership_sweep" / cond
+        pooled: list[float] = []
+        for p in sorted(cond_dir.glob("seed*.parquet")):
+            df = _pd.read_parquet(p)
+            thresh = df["window_idx"].quantile(_SS_Q)
+            pooled.extend(df[df["window_idx"] >= thresh]["phi_spectral"].tolist())
+        phi = np.array(pooled, dtype=float)
+        _, dp = _diptest.diptest(phi)
+        kde = _gaussian_kde(phi)
+        x = np.linspace(phi.min(), phi.max(), 2000)
+        y = kde(x)
+        ht = _KDE_FRAC * y.max()
+        mx = _argrelextrema(y, np.greater, order=_KDE_ORD)[0]
+        modes = max(int(np.sum(y[mx] >= ht)), 1)
+        q25, q75 = np.percentile(phi, [25, 75])
+        iqr = q75 - q25
+        std_iqr = float(phi.std(ddof=1) / iqr) if iqr > 0 else float("nan")
+        return phi, float(dp), modes, std_iqr
+
     ax = fig.add_subplot(gs[1, 1])
     for j, c in enumerate(CONDITIONS):
-        key = f"lambda_{str(c).replace('.', '_')}_phi"
-        all_phi = ts[key].ravel()  # all windows × 10 seeds = 930 windows
-        bm = agg["bimodality"][f"lambda_{c}"]
+        ss_phi, dip_p, modes, std_iqr = _ss_phi(c)
         label = (
-            f"{COND_LABELS[j]}: dip_p={bm['dip_p']:.2f}, "
-            f"modes={bm['kde_modes']}, std/IQR={bm['std_over_iqr']:.2f}"
+            f"{COND_LABELS[j]}: dip_p={dip_p:.2f}, "
+            f"modes={modes}, std/IQR={std_iqr:.2f}"
         )
         ax.hist(
-            all_phi, bins=60, alpha=0.55, color=COND_COLORS[j], label=label, density=True,
+            ss_phi, bins=60, alpha=0.55, color=COND_COLORS[j], label=label, density=True,
             histtype="stepfilled", edgecolor=COND_COLORS[j],
         )
     ax.set_xscale("symlog", linthresh=1.0)
-    ax.set_xlabel("Φ_spectral (per-window, pooled across 10 seeds)")
+    ax.set_xlabel("Φ_spectral (per-window, steady-state only, pooled across 10 seeds)")
     ax.set_ylabel("density")
-    ax.set_title("(d)  Per-window Φ distribution by condition")
+    ax.set_title("(d)  Per-window Φ distribution by condition\n(steady-state: window_idx ≥ quantile(2/3))")
     ax.legend(loc="upper right", fontsize=7.5)
     ax.grid(alpha=0.25)
 
@@ -261,8 +289,8 @@ def render_mi_diagnostic(agg: dict, mech: dict[str, np.ndarray]) -> Path:
         rowLoc="center",
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(8.5)
-    table.scale(1.0, 1.7)
+    table.set_fontsize(8.0)
+    table.scale(1.0, 2.2)
     axT.set_title("Structural descriptors (A2 reference vs leadership rep windows)", fontsize=10)
 
     # ---- Bottom strip: interpretation + leader marker key ------------------

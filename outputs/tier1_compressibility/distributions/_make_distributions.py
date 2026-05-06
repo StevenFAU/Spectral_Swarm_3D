@@ -161,17 +161,17 @@ def render_panel(ax: plt.Axes, phi: np.ndarray, seed_means: list[float],
         ax.plot([sm, sm], [ylim[0], ymax_tick], color="#2ca02c", lw=0.9, alpha=0.7)
 
     bm_str = "BIMODAL" if diag["bimodal"] else "unimodal"
-    di_str = "\n[DATA INTEGRITY]" if data_integrity_flag else ""
+    di_str = "\n†shared-baseline" if data_integrity_flag else ""
     annotation = (
         f"dip p={diag['dip_p']:.3f}  modes={diag['mode_count']}\n"
         f"std/IQR={diag['std_iqr']:.3f}  {bm_str}{di_str}"
     )
-    title_color = "#8B0000" if data_integrity_flag else "black"
+    title_color = "#4a6e4c" if data_integrity_flag else "black"
     ax.set_title(cond_label, fontsize=10, fontweight="bold", pad=3, color=title_color)
     ax.text(0.97, 0.97, annotation, transform=ax.transAxes,
             fontsize=7.5, va="top", ha="right",
             bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.85,
-                      ec="#8B0000" if data_integrity_flag else "none"))
+                      ec="#4a6e4c" if data_integrity_flag else "none"))
     ax.set_xlabel("Φ_spectral", fontsize=8)
     ax.set_ylabel("density", fontsize=8)
     ax.tick_params(labelsize=7)

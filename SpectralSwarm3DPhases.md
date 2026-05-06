@@ -263,9 +263,19 @@ indefinitely.
 
 **D14. Compressibility mechanism (Bailey & Schneider 2025 §4.2–§4.3)
 predicts Φ_spectral inversions at regimes of low within-window dynamic
-amplitude.** Two empirical instances confirmed in Phase 4: (i)
-alignment_sweep (anticipated by C1); (ii) jamming_sweep (A2 diagnostic,
-commit cc23aa9). Mechanism: Φ_spectral measures within-window
+amplitude.** Two complementary empirical instances confirmed in Phase 4,
+testing distinct Bailey & Schneider predictions: (i) **alignment_sweep
+confirms the §4.2 transitional Φ peak** — at w_a=0.6 the steady-state
+per-window Φ distribution is bimodal (Tier 1.B audit, commit `4f821ae`),
+the within-window signature of the partial-coherence regime where windows
+alternate between turning/wobble (high-Φ) and steady-flight (low-Φ)
+modes; (ii) **jamming_sweep confirms the §4.3 compressibility
+prediction** — at α=0.2 the MI matrix is uniformly elevated with
+within-window σ_u driving Φ above the coherent baseline (A2 diagnostic,
+commit `cc23aa9`). The original D14 framing of these as "two instances
+of compressibility" was imprecise; they are complementary tests of two
+distinct predictions within the same Bailey & Schneider §4.2–§4.3
+framework. Mechanism: Φ_spectral measures within-window
 informational dependence; coherent low-dynamics regimes bimodalize Φ
 across windows (steady-flight windows collapse to low MI, wobble/turn
 windows reach high MI) so the mean drops below moderately-disordered

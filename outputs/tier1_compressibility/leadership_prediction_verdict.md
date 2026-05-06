@@ -57,22 +57,29 @@ percentile bootstrap on the cross-seed mean.
 phi_norm cross-seed σ = 0.025 at α=0.2 (compressibility) vs 0.086 at α=1.0
 (coherent baseline).
 
-### Bimodality diagnostics (per-window Φ pooled across seeds, n=930 each)
+### Bimodality diagnostics (per-window Φ, steady-state windows only, n≈310 each)
 
 | Condition | Hartigan dip p | KDE mode count | std/IQR |
 |---|---|---|---|
-| λ=0.0 | 0.659 | 1 | 0.629 |
-| λ=0.8 | **0.129** | **2** | 0.593 |
-| λ=1.6 | 1.000 | 1 | 3.549 |
-| λ=2.4 | 0.999 | 1 | 1.988 |
+| λ=0.0 | 0.914 | 1 | 0.611 |
+| λ=0.8 | 0.907 | 1 | 0.661 |
+| λ=1.6 | 0.992 | 1 | 0.919 |
+| λ=2.4 | 0.953 | 1 | 2.616 |
 
-**Reading.** Bimodality concentrates at λ=0.8 (the moderate-disorder
-regime), not at the high-λ extreme. λ=1.6 and λ=2.4 are unimodal but
-heavy-tailed (std/IQR ≫ 1). D14's secondary prediction that high-λ
-distributions become "more tightly unimodal than at λ=0 or λ=0.8" is
-partly supported (mode count drops to 1) but the heavy tails at λ=1.6
-and λ=2.4 indicate occasional high-Φ excursions, not a tight
-distribution.
+> Bimodality diagnostics revised to steady-state-only pooling per the Tier 1.B audit's
+> methodological clarification (commit `4f821ae`). The original Tier 1.A all-windows
+> pooling produced different numbers for λ=0.8 (dip p=0.129, modes=2, classified bimodal);
+> this was a transient-mixing artifact, documented in the audit's cross-reference section.
+> The verdict's overall classification (Outcome 4) is unchanged — bimodality at λ=0.8 was
+> not load-bearing for the Outcome 4 finding.
+
+**Reading.** All four conditions are unimodal under steady-state-only pooling. λ=2.4
+remains heavy-tailed (std/IQR=2.616), reflecting occasional high-Φ excursions; λ=1.6
+is narrower (std/IQR=0.919). The original Tier 1.A finding that λ=0.8 appeared bimodal
+(modes=2) does not replicate under steady-state restriction — it was a transient-mixing
+artifact. D14's secondary prediction that high-λ distributions become "more tightly
+unimodal than at λ=0 or λ=0.8" is not supported; all conditions are unimodal and the
+high-λ tails are heavier, not tighter.
 
 ### What does and does not fit the compressibility prediction
 

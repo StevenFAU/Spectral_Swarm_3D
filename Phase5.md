@@ -93,6 +93,15 @@ The contingent scoping is decided at the Tier 1.A verdict pause and documented i
 
 **What to compute.** Aggregate the Tier 1.A and 1.B results into a single cross-sweep table. Columns: sweep, condition, Φ cross-seed mean, σ_u cross-seed mean, within-window Φ bimodality index, phi_norm cross-seed σ (the secondary confirmation signal Opus identified). Rows: every condition from every primary sweep.
 
+**Alignment_sweep high-w_a non-monotonicity check.** The Tier 1.B distribution figures suggest
+mean Φ at w_a=1.8 may be slightly higher than at w_a=1.2 (~130 vs ~120 from visual inspection
+of `alignment_sweep_distributions.png`). Verify against `outputs/alignment_sweep/cross_seed_summary.csv`.
+If the ordering is real (with cross-seed CIs disjoint or close to it), document the mild
+non-monotonicity at the top of the alignment sweep — this has implications for the §4.2
+transitional-peak interpretation (specifically whether the post-peak decline is monotonic). If
+the ordering is within noise, document the null finding. Either way, this verification is a
+single-paragraph addition to the cross-sweep audit, not a separate analysis.
+
 **What to look for.** The compressibility signature is: low σ_u (coherent within-window dynamics) correlates with high bimodality AND with low phi_norm cross-seed σ (jamming regularization signal inverted). If this triple-correlation holds across conditions from multiple sweeps, compressibility is a general mechanism. If it holds only in jamming, compressibility is sweep-specific.
 
 **Output.** `outputs/tier1_compressibility/cross_sweep_audit.md` with the table, a one-paragraph interpretation, and a verdict on whether D14's "general mechanism" framing is empirically supported.
@@ -111,6 +120,14 @@ Port the 2D `comparison.py` with these extensions:
 - Per D14, the primary comparison output table for each sweep reports both the steady-state mean AND three distribution summary statistics per condition: median, interquartile range, bimodality index. Steady-state mean alone is not sufficient for sweeps exhibiting bimodality.
 - η² computations use bootstrap CIs per D2. Bootstrap is on per-seed values (not per-window), B=1000, resampling seeds with replacement.
 - Histogram estimator results are reported under the D11 sign-only interpretation: only the sign of condition-level differences is inferred; magnitudes and within-condition rankings are flagged as unreliable.
+
+**Note on shared-baseline conditions.** `jamming α=1.0`, `leader λ=0.0`, and `milling μ=0.0`
+are byte-identical runs (verified at commit `7a5b58e`; see `bimodality_audit.md`
+§shared-baseline-equivalence). All three reduce to vanilla boids at their boundary values
+under D6 deterministic seeding. Cross-scenario agreement statistics in Tier 2.C must either
+collapse these three conditions to a single "vanilla baseline" entry or explicitly mark them
+as identical when computing cross-scenario Spearman correlations and η² tables — otherwise
+pairs containing any two of the three will inflate agreement metrics artificially.
 
 Tests: port 2D `test_comparison.py` with 3D column schema updates. Add tests for the new distribution-summary output columns.
 
