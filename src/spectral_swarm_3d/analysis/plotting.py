@@ -296,20 +296,98 @@ def plot_monitoring_auc(
 
 
 # ---------------------------------------------------------------------------
-# Phase 5 NEW functions — stubs for Tier 3.B / Tier 3.C sessions
+# Phase 5 NEW functions — implemented in Tier 3.A rendering session
 # ---------------------------------------------------------------------------
+
+_GOLD = "#FFD700"
+_MECH_MARKER: dict[str, tuple[str, str]] = {
+    "4.2": ("o", _GOLD),
+    "4.3": ("^", _GOLD),
+    "leader": ("s", _GOLD),
+    "exploratory": ("D", "none"),
+}
+
+
+def add_mechanism_glyph(
+    ax: "plt.Axes",
+    x: float,
+    y: float,
+    mechanism: str,
+    size: int = 80,
+) -> None:
+    """Draw a gold-filled mechanism-family glyph at data coordinates (§0 convention).
+
+    Args:
+        ax: target axes.
+        x, y: data-space coordinates for the glyph centre.
+        mechanism: one of "4.2", "4.3", "leader", "exploratory".
+        size: scatter marker area in pts².
+    """
+    marker, fc = _MECH_MARKER.get(mechanism, ("o", _GOLD))
+    ax.scatter([x], [y], marker=marker, s=size, color="black",
+               facecolors=fc, edgecolors="black", linewidths=1.2, zorder=5)
+
 
 def plot_snapshot_3d(
     positions: np.ndarray,
     velocities: np.ndarray | None = None,
     fiedler_partition: np.ndarray | None = None,
     ax=None,
-):
+    *,
+    is_leader: np.ndarray | None = None,
+    L: float = 50.0,
+    title: str = "",
+    elev: float = 20.0,
+    azim: float = 45.0,
+) -> "plt.Axes":
     """Static 3D scatter of agent positions with optional Fiedler partition colour.
 
-    Tier 3.B implementation target. See Phase5.md §Tier 3.A figure 8.
+    Implements Phase5.md §Tier 3.A figure 8.
+
+    Args:
+        positions: (N, 3) agent positions.
+        velocities: (N, 3) agent velocities (unused in static plot, reserved for arrows).
+        fiedler_partition: (N,) integer labels {0, 1} for bipartition colouring.
+            If None, all agents are coloured uniformly.
+        ax: existing Axes3D to draw into; created if None.
+        is_leader: (N,) bool mask; leaders rendered at 3× normal size.
+        L: box side length; sets axis limits to [0, L].
+        title: subplot title.
+        elev, azim: 3D view angles in degrees.
+
+    Returns:
+        The populated Axes3D object.
     """
-    raise NotImplementedError("Phase 5 Tier 3.B — plot_snapshot_3d not yet implemented")
+    import matplotlib.pyplot as _plt
+    from mpl_toolkits.mplot3d import Axes3D  # noqa: F401
+
+    if ax is None:
+        fig = _plt.figure(figsize=(5, 5))
+        ax = fig.add_subplot(111, projection="3d")
+
+    N = len(positions)
+    if fiedler_partition is not None:
+        colors = np.where(np.asarray(fiedler_partition) == 0, "#E41A1C", "#377EB8")
+    else:
+        colors = ["#4878CF"] * N
+
+    sizes = np.full(N, 20)
+    if is_leader is not None:
+        sizes[np.asarray(is_leader, dtype=bool)] = 60
+
+    ax.scatter(positions[:, 0], positions[:, 1], positions[:, 2],
+               c=colors, s=sizes, alpha=0.85, edgecolors="none")
+    ax.set_xlim(0, L)
+    ax.set_ylim(0, L)
+    ax.set_zlim(0, L)
+    ax.view_init(elev=elev, azim=azim)
+    ax.set_xlabel("x", fontsize=7, labelpad=1)
+    ax.set_ylabel("y", fontsize=7, labelpad=1)
+    ax.set_zlabel("z", fontsize=7, labelpad=1)
+    ax.tick_params(labelsize=6)
+    if title:
+        ax.set_title(title, fontsize=8, pad=2)
+    return ax
 
 
 def animate_trajectory_3d(
@@ -330,12 +408,57 @@ def plot_phi_distribution(
     diag: dict,
     condition_label: str,
     out_dir: Path,
+    *,
+    color: str = "#4878CF",
+    log_scale: bool = False,
 ) -> None:
-    """Per-window Phi distribution panel with bimodality annotation.
+    """Per-window Φ histogram panel with bimodality annotation.
 
-    Tier 3.A implementation target. See Phase5.md §Tier 3.A figure 1.
+    Implements Phase5.md §Tier 3.A figure 1 histogram panels.
+
+    Args:
+        phi_vals: pooled steady-state phi_spectral values.
+        diag: dict with keys "dip_p" (float) and "modes" (int).
+        condition_label: displayed in title and filename.
+        out_dir: output directory.
+        color: bar colour.
+        log_scale: use log x-axis (for compressed Φ like leadership λ=2.4).
     """
-    raise NotImplementedError("Phase 5 Tier 3.A — plot_phi_distribution not yet implemented")
+    import matplotlib.pyplot as _plt
+    import numpy as _np
+
+    fig, ax = _plt.subplots(figsize=(4, 3))
+    v = phi_vals[_np.isfinite(phi_vals)]
+
+    if log_scale and v.min() > 0:
+        lo = max(0.1, v.min())
+        bins = _np.logspace(_np.log10(lo), _np.log10(v.max()), 30)
+        ax.set_xscale("log")
+    else:
+        # Clamp FD bins: bimodal distributions inflate IQR → too few bins
+        edges = _np.histogram_bin_edges(v, bins="fd")
+        n = len(edges) - 1
+        if n < 25:
+            edges = _np.histogram_bin_edges(v, bins=30)
+        elif n > 80:
+            edges = _np.histogram_bin_edges(v, bins=80)
+        bins = edges
+
+    ax.hist(v, bins=bins, density=True, color=color, alpha=0.75, edgecolor="none")
+    dip_p = diag.get("dip_p", None)
+    modes = diag.get("modes", None)
+    if dip_p is not None:
+        ann = f"dip p={dip_p:.3g}"
+        if modes is not None:
+            ann += f"\nmodes={modes}"
+        ax.text(0.97, 0.95, ann, transform=ax.transAxes, fontsize=8,
+                ha="right", va="top",
+                bbox=dict(boxstyle="round,pad=0.2", fc="lightyellow", ec="gray", alpha=0.8))
+    ax.set_xlabel("Φ_spectral", fontsize=10)
+    ax.set_ylabel("density", fontsize=10)
+    ax.set_title(condition_label, fontsize=10)
+    fig.tight_layout()
+    _save(fig, out_dir, f"phi_dist_{condition_label}")
 
 
 def plot_compressibility_panel(
@@ -344,6 +467,10 @@ def plot_compressibility_panel(
 ) -> None:
     """Cross-sweep compressibility panel (primary publication figure).
 
-    Tier 3.A implementation target. See Phase5.md §Tier 3.A figure 1.
+    Delegates to the full three-mechanism panel in scripts/render_tier3a_figures.py.
+    Tier 3.A rendering session (commit following b981317) implements the actual figure.
     """
-    raise NotImplementedError("Phase 5 Tier 3.A — plot_compressibility_panel not yet implemented")
+    raise NotImplementedError(
+        "plot_compressibility_panel is a thin wrapper stub; "
+        "use scripts/render_tier3a_figures.fig1_three_mechanism_panel() for the full figure."
+    )
