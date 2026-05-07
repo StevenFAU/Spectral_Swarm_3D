@@ -102,7 +102,7 @@ transitional-peak interpretation (specifically whether the post-peak decline is 
 the ordering is within noise, document the null finding. Either way, this verification is a
 single-paragraph addition to the cross-sweep audit, not a separate analysis.
 
-**What to look for.** The compressibility signature is: low σ_u (coherent within-window dynamics) correlates with high bimodality AND with low phi_norm cross-seed σ (jamming regularization signal inverted). If this triple-correlation holds across conditions from multiple sweeps, compressibility is a general mechanism. If it holds only in jamming, compressibility is sweep-specific.
+**What to look for.** The compressibility signature is: floor-locked moderate σ_u above the coherent baseline correlates with high bimodality AND with low phi_norm cross-seed σ (jamming regularization signal inverted). If this triple-correlation holds across conditions from multiple sweeps, compressibility is a general mechanism. If it holds only in jamming, compressibility is sweep-specific.
 
 **Output.** `outputs/tier1_compressibility/cross_sweep_audit.md` with the table, a one-paragraph interpretation, and a verdict on whether D14's "general mechanism" framing is empirically supported.
 
@@ -121,13 +121,17 @@ Port the 2D `comparison.py` with these extensions:
 - η² computations use bootstrap CIs per D2. Bootstrap is on per-seed values (not per-window), B=1000, resampling seeds with replacement.
 - Histogram estimator results are reported under the D11 sign-only interpretation: only the sign of condition-level differences is inferred; magnitudes and within-condition rankings are flagged as unreliable.
 
-**Note on shared-baseline conditions.** `jamming α=1.0`, `leader λ=0.0`, and `milling μ=0.0`
-are byte-identical runs (verified at commit `7a5b58e`; see `bimodality_audit.md`
-§shared-baseline-equivalence). All three reduce to vanilla boids at their boundary values
-under D6 deterministic seeding. Cross-scenario agreement statistics in Tier 2.C must either
-collapse these three conditions to a single "vanilla baseline" entry or explicitly mark them
-as identical when computing cross-scenario Spearman correlations and η² tables — otherwise
-pairs containing any two of the three will inflate agreement metrics artificially.
+**Note on shared-baseline conditions.** Eight Phase 4 sweep conditions are byte-identical runs
+that all reduce to vanilla boids at their respective boundary values under D6 deterministic
+seeding. Five at n=10: `jamming α=1.0`, `leader λ=0.0`, `milling μ=0.0`, `noise σ=0.05`,
+`split_merge none`. Three at n=5 (the n=5 sensitivity-default cluster): `w_sensitivity W40`,
+`alignment_rule_sensitivity mean`, `sensitivity ksg_kinematic`. Verified at commit `7a5b58e`
+(initial three-condition equivalence, Tier 1.B) and extended to the full eight by the Tier 1.C
+audit (commit `fec6079`, `audit_aggregates.json::vanilla_baseline_equivalence`). Cross-scenario
+agreement statistics in Tier 2.C must either collapse these eight conditions to a single
+"vanilla baseline" entry or explicitly mark them as identical when computing cross-scenario
+Spearman correlations and η² tables — otherwise pairs containing any two of the eight will
+inflate agreement metrics artificially.
 
 Tests: port 2D `test_comparison.py` with 3D column schema updates. Add tests for the new distribution-summary output columns.
 

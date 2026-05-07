@@ -265,11 +265,17 @@ indefinitely.
 predicts Φ_spectral inversions at regimes of low within-window dynamic
 amplitude.** Two complementary empirical instances confirmed in Phase 4,
 testing distinct Bailey & Schneider predictions: (i) **alignment_sweep
-confirms the §4.2 transitional Φ peak** — at w_a=0.6 the steady-state
-per-window Φ distribution is bimodal (Tier 1.B audit, commit `4f821ae`),
-the within-window signature of the partial-coherence regime where windows
-alternate between turning/wobble (high-Φ) and steady-flight (low-Φ)
-modes; (ii) **jamming_sweep confirms the §4.3 compressibility
+at w_a=0.6 and noise_sweep at σ=0.2 confirm the §4.2 transitional Φ
+peak** — at both conditions the steady-state per-window Φ distribution
+is bimodal (`alignment w_a=0.6`: dip p = 0.102, Tier 1.B audit, commit
+`4f821ae`; `noise σ=0.2`: dip p ≈ 7.6 × 10⁻⁶, Tier 1.C audit, commit
+`fec6079`), the within-window signature of the partial-coherence regime
+where windows alternate between turning/wobble (high-Φ) and steady-flight
+(low-Φ) modes. The noise instance additionally satisfies the mean-Φ-peak
+component (Φ peaks at σ=0.2 above both the synchronized σ=0.0 endpoint
+and the disordered σ=0.5 endpoint), which the alignment instance cannot
+test cleanly because the alignment-sweep disordered endpoint (w_a=0.0) is
+not B&S-random in this model; (ii) **jamming_sweep confirms the §4.3 compressibility
 prediction** — at α=0.2 the MI matrix is uniformly elevated with
 within-window σ_u driving Φ above the coherent baseline (A2 diagnostic,
 commit `cc23aa9`). The original D14 framing of these as "two instances
@@ -327,9 +333,9 @@ within-steady-state bimodality.
 remains the correct theoretical reading of the jamming sweep (A2 commit
 `cc23aa9`). The mechanism description in D14 is preserved. Two
 empirical findings refine the originally-claimed scope: (1) the Phase 4
-alignment_sweep instance is specifically the *transitional* w_a=0.6
-condition (bimodality at the disorder-to-order transition), not a
-coherent-regime instance; (2) the Phase 5 prediction that the mechanism
+alignment_sweep and noise_sweep instances are specifically the *transitional*
+w_a=0.6 and σ=0.2 conditions (bimodality at the disorder-to-order
+transition), not coherent-regime instances; (2) the Phase 5 prediction that the mechanism
 would extend to leadership at high λ was tested and not supported.
 Phase 5 reports this as a refined-scope result, not a refutation.
 
