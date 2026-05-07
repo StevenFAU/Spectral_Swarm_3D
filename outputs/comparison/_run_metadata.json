@@ -1,0 +1,44 @@
+{
+  "head_sha": "5d1d5c01587c3b525630b5b8d056a6e937f3b0d6",
+  "python_version": "3.12.3",
+  "dependencies": {
+    "numpy": "2.4.3",
+    "pandas": "3.0.2",
+    "scipy": "1.17.1",
+    "matplotlib": "3.10.8",
+    "scikit-learn": "1.8.0",
+    "diptest": "0.11.0"
+  },
+  "n_input_files": 335,
+  "conditions_per_sweep": {
+    "alignment_sweep": 4,
+    "jamming_sweep": 3,
+    "leadership_sweep": 4,
+    "split_merge_sweep": 2,
+    "milling_sweep": 4,
+    "noise_sweep": 5,
+    "n_sensitivity_N80": 4,
+    "n_sensitivity_N160": 4,
+    "w_sensitivity": 4,
+    "alignment_rule_sensitivity": 2,
+    "sensitivity": 9
+  },
+  "shared_baseline_collapse": {
+    "n_before": 45,
+    "n_after": 38,
+    "delta": 7,
+    "expected_delta": 7,
+    "pass": true,
+    "vanilla_aliases_count": 8,
+    "vanilla_aliases": [
+      "W40",
+      "alpha_1.0",
+      "ksg_kinematic",
+      "lambda_0.0",
+      "mean",
+      "mu_0.0",
+      "none",
+      "sigma_0.05"
+    ]
+  }
+}

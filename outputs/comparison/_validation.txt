@@ -1,0 +1,52 @@
+Phase 5 Tier 2.C — Validation Checks
+=============================================
+
+[1] Sweeps loaded: 11/11  PASS
+
+[2] Shared-baseline collapse: 45 rows → 38 (delta=7, expected=7)
+    PASS
+    vanilla_baseline aliases (8): W40, alpha_1.0, ksg_kinematic, lambda_0.0, mean, mu_0.0, none, sigma_0.05
+
+[3] η² range: PASS — all values in [0, 1]
+
+[4] Surrogate integration (8 scenarios populated) and
+    bimodality cross-check (alignment w_a=0.6 dip p ≈ 0.102):
+    Run build_scenario_summary.py — validation appended to this file.
+
+[5] Conditions per sweep:
+    alignment_sweep: 4
+    jamming_sweep: 3
+    leadership_sweep: 4
+    split_merge_sweep: 2
+    milling_sweep: 4
+    noise_sweep: 5
+    n_sensitivity_N80: 4
+    n_sensitivity_N160: 4
+    w_sensitivity: 4
+    alignment_rule_sensitivity: 2
+    sensitivity: 9
+
+=============================================
+build_scenario_summary.py validation
+=============================================
+
+[A] Row count: 38 (expect 35–40)
+    OK
+
+[B] vanilla_baseline aliases: 8 (expect 8)
+    PASS
+    W40, alpha_1.0, ksg_kinematic, lambda_0.0, mean, mu_0.0, none, sigma_0.05
+
+[C] Bimodality cross-check: alignment wa_0.6 dip p = 0.1022
+    Tier 1.B audit reference: ≈0.102
+    PASS (within 0.05–0.20 range)
+
+[D] Surrogate z populated: 8 rows (expect 9: 8 scenarios + vanilla_baseline)
+    PASS
+
+[E] §4.2 instances: [{'sweep': 'alignment_sweep', 'condition': 'wa_0.6'}, {'sweep': 'noise_sweep', 'condition': 'sigma_0.2'}]
+    §4.3 instances: [{'sweep': 'jamming_sweep', 'condition': 'alpha_0.2'}]
+
+[F] §4.3 inversion: jamming α=0.2 Φ = 187.23, vanilla_baseline Φ = 131.81
+    Inversion magnitude: +55.41 (+42.0%)
+    Direction: CORRECT — jamming above baseline (§4.3 prediction confirmed)
