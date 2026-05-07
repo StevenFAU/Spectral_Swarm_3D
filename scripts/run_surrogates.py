@@ -20,11 +20,14 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -65,6 +68,240 @@ _SCENARIO_REGISTRY: list[tuple[str, str, str]] = [
 _SANITY_CHECK_SCENARIO = "noise_sigma_0.5"
 
 
+def run_disabled_interaction_control(
+    rng_seed: int = 0,
+    n_shuffles: int = 10,
+    seed: int = 0,
+    noise_sigma: float = 0.5,
+) -> pd.DataFrame:
+    """Run surrogate test on disabled-interaction control (method validation).
+
+    Constructs a BoidSwarmModel3D with all cross-agent interaction weights set to
+    zero (w_a=w_c=w_s=0). scenario_name='none' ensures leader and milling forces
+    are also zero. The resulting telemetry is N independent random walks driven
+    only by noise — a valid positive control by construction (circular-shift
+    surrogates should not flag uncoupled telemetry as above-null).
+
+    Parameters
+    ----------
+    rng_seed : int
+        RNG seed for surrogate circular shifts.
+    n_shuffles : int
+        Number of circular-shift surrogates (default 10).
+    seed : int
+        Simulation seed (default 0).
+    noise_sigma : float
+        Noise level (default 0.5; only stochastic driver — value does not affect
+        whether agents are cross-coupled, only the amplitude of individual random walks).
+
+    Returns
+    -------
+    pd.DataFrame
+        Same format as run_surrogate_test output. parquet_phi_mean and parquet_match
+        are NaN (parquet cross-check is not applicable — no canonical parquet exists
+        for this control configuration).
+    """
+    from spectral_swarm_3d.analysis.features import extract_features
+    from spectral_swarm_3d.analysis.surrogates import surrogate_phi_spectral
+    from spectral_swarm_3d.model import BoidSwarmModel3D
+
+    meta_path = _OUTPUTS_ROOT / "jamming_sweep" / "alpha_1.0" / f"seed{seed}.metadata.json"
+    with meta_path.open() as f:
+        meta = json.load(f)
+    config = dict(meta["config"])
+
+    config["w_a"] = 0.0
+    config["w_c"] = 0.0
+    config["w_s"] = 0.0
+    config["noise_sigma"] = noise_sigma
+
+    _log.info(
+        "Disabled-interaction control: w_a=0 w_c=0 w_s=0 noise_sigma=%.2f seed=%d",
+        noise_sigma, seed,
+    )
+
+    with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tf:
+        tel_path = Path(tf.name)
+    try:
+        model = BoidSwarmModel3D(
+            config=config,
+            scenario_name="none",
+            seed=seed,
+            telemetry_path=tel_path,
+        )
+        model.run()
+        tel = pd.read_csv(tel_path)
+    finally:
+        tel_path.unlink(missing_ok=True)
+
+    tel = tel.sort_values(["step", "agent_id"], kind="stable").reset_index(drop=True)
+    feature_set = str(config.get("feature_set", "kinematic"))
+    features = extract_features(tel, feature_set)
+
+    rng = np.random.default_rng(rng_seed)
+    result = surrogate_phi_spectral(features, rng, n_shuffles=n_shuffles, config=config)
+
+    observed_phi = result["observed_phi"]
+    _log.info(
+        "disabled_interaction: observed_phi=%.3f surrogate_mean=%.3f z=%.2f",
+        observed_phi, result["surrogate_mean"], result["z_score"],
+    )
+
+    scenario_label = "disabled_interaction"
+    common: dict[str, Any] = {
+        "scenario": scenario_label,
+        "surrogate_mean": result["surrogate_mean"],
+        "surrogate_95ci_lo": result["surrogate_95ci"][0],
+        "surrogate_95ci_hi": result["surrogate_95ci"][1],
+        "z_score": result["z_score"],
+        "surrogate_std": result["surrogate_std"],
+    }
+
+    rows: list[dict[str, Any]] = [{
+        **common,
+        "shuffle_idx": -1,
+        "kind": "observed",
+        "phi_spectral_mean": observed_phi,
+        "parquet_phi_mean": float("nan"),
+        "parquet_match": float("nan"),
+    }]
+    for i, phi_mean in enumerate(result["surrogate_phi_distribution"]):
+        rows.append({
+            **common,
+            "shuffle_idx": i,
+            "kind": "surrogate",
+            "phi_spectral_mean": float(phi_mean),
+            "parquet_phi_mean": float("nan"),
+            "parquet_match": float("nan"),
+        })
+
+    return pd.DataFrame(rows)
+
+
+def _build_method_validation_section(
+    observed_phi: float,
+    surrogate_mean: float,
+    surr_lo: float,
+    surr_hi: float,
+    z: float,
+) -> str:
+    """Build the two-part method-validation header for README_summary.md."""
+    within_ci = surr_lo <= observed_phi <= surr_hi
+    verdict = "PASS" if within_ci else "FAIL"
+
+    lines: list[str] = []
+    lines.append("## Method Validation — Disabled-Interaction Control\n\n")
+    lines.append(f"**{verdict}**\n\n")
+    lines.append(
+        f"Observed Φ = {observed_phi:.3f}. "
+        f"Surrogate 95% CI = [{surr_lo:.3f}, {surr_hi:.3f}]. "
+        f"z = {z:.2f}.\n\n"
+    )
+    if within_ci:
+        lines.append(
+            "The disabled-interaction control (all w_a/w_c/w_s = 0, scenario='none', "
+            f"noise σ=0.5) yields observed Φ within the surrogate 95% CI. "
+            "By construction this run produces N independent random walks with no cross-agent "
+            "coupling. The circular-shift protocol correctly identifies this run as near-baseline "
+            "— validating the surrogate method for interpreting the per-scenario nulls below. "
+            "The eight existing per-scenario results are interpretable.\n\n"
+        )
+    else:
+        lines.append(
+            "The disabled-interaction control (all w_a/w_c/w_s = 0, scenario='none', "
+            f"noise σ=0.5) yields observed Φ OUTSIDE the surrogate 95% CI (z={z:.2f}). "
+            "This control produces N independent random walks with no cross-agent coupling "
+            "by construction. A fail here indicates a systematic bias in the circular-shift "
+            "surrogate method itself — per-scenario results are not interpretable until "
+            "the bias is diagnosed and resolved.\n\n"
+        )
+
+    lines.append("## Note on Noise σ=0.5 (Failed Designed Positive Control)\n\n")
+    lines.append(
+        "The original Phase5.md §141 design specified noise σ=0.5 as the surrogate-method "
+        "positive control (expected: observed ≈ surrogate). That assumption did not hold: "
+        "at w_a=1.0 and vision_radius=10.0, boids at σ=0.5 maintain real cross-agent "
+        "temporal structure (observed polarization=0.46 from the parquet). The circular-shift "
+        "surrogate correctly reflects what purely temporally-independent agents would produce "
+        "(~70.9 Φ); the 12-unit gap between observed and surrogate represents real integration "
+        "the boids interaction maintains even at high noise. This is consistent with Phase5.md "
+        "§158: 'the noise scenario is less random than assumed' is the alternative explanation "
+        "when the method is otherwise confirmed to be working.\n\n"
+        "Three post-run validation checks confirmed the surrogate method is mechanically "
+        "correct: (1) surrogate variance nonzero for all 8 scenarios (std range 0.47–2.60); "
+        "(2) all 8 parquet consistency checks passed; "
+        "(3) noise σ=0.5 CI width = 1.85 on surrogate mean ~70.9 (2.6% of mean). "
+        "The disabled-interaction control above is the actual validated positive control. "
+        "The noise σ=0.5 FAIL reflects a design-assumption mismatch in Phase5.md §141, "
+        "not a method bug.\n\n"
+    )
+
+    return "".join(lines)
+
+
+def _update_readme_with_disabled_interaction(
+    outputs_dir: Path,
+    observed_phi: float,
+    surrogate_mean: float,
+    surr_lo: float,
+    surr_hi: float,
+    z: float,
+) -> None:
+    """Targeted README_summary.md update: replace first section, append control row.
+
+    Replaces the 'Sanity-Check Verdict (noise σ=0.5)' section with the two-part
+    method-validation structure (disabled-interaction control + noise σ=0.5 note).
+    Appends the disabled_interaction row to the per-scenario summary table.
+    All other sections are preserved verbatim.
+    """
+    readme_path = outputs_dir / "README_summary.md"
+    text = readme_path.read_text()
+
+    new_section = _build_method_validation_section(
+        observed_phi=observed_phi,
+        surrogate_mean=surrogate_mean,
+        surr_lo=surr_lo,
+        surr_hi=surr_hi,
+        z=z,
+    )
+
+    # Replace old Sanity-Check Verdict section (from its header up to Per-Scenario header)
+    old_header = "## Sanity-Check Verdict (noise σ=0.5)\n"
+    next_header = "## Per-Scenario Summary Table\n"
+
+    start_idx = text.find(old_header)
+    end_idx = text.find(next_header)
+    if start_idx == -1 or end_idx == -1:
+        raise ValueError(
+            f"Could not locate section boundaries in {readme_path}. "
+            "Expected '## Sanity-Check Verdict' and '## Per-Scenario Summary Table'."
+        )
+
+    text = text[:start_idx] + new_section + "\n" + text[end_idx:]
+
+    # Append disabled_interaction row after the last row (noise_sigma_0.2) of the table.
+    above = observed_phi > surr_hi
+    di_row = (
+        f"| disabled_interaction "
+        f"| {observed_phi:.3f} "
+        f"| {surrogate_mean:.3f} "
+        f"| {surr_lo:.3f} "
+        f"| {surr_hi:.3f} "
+        f"| {z:.2f} "
+        f"| {above} "
+        f"| method validation |\n"
+    )
+    anchor = "| noise_sigma_0.2"
+    anchor_idx = text.find(anchor)
+    if anchor_idx == -1:
+        raise ValueError(f"Could not find 'noise_sigma_0.2' row in table in {readme_path}.")
+    row_end = text.find("\n", anchor_idx) + 1
+    text = text[:row_end] + di_row + text[row_end:]
+
+    readme_path.write_text(text)
+    _log.info("Updated %s (disabled-interaction method validation)", readme_path)
+
+
 def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Phase 5 Tier 2.B surrogate null testing.")
     p.add_argument("--n-shuffles", type=int, default=10, metavar="N",
@@ -77,6 +314,16 @@ def _parse_args() -> argparse.Namespace:
                    help="Comma-separated scenario labels to run (default: all 8).")
     p.add_argument("--outputs-dir", type=str, default=str(REPO_ROOT / "outputs" / "surrogates"),
                    help="Directory for null CSVs and README_summary.md.")
+    p.add_argument(
+        "--disabled-interaction",
+        action="store_true",
+        help=(
+            "Run disabled-interaction method-validation control (w_a=w_c=w_s=0, "
+            "noise σ=0.5). Writes disabled_interaction_null.csv and updates "
+            "README_summary.md first section if validation passes. "
+            "Does NOT re-run the 8 per-scenario nulls."
+        ),
+    )
     return p.parse_args()
 
 
@@ -355,6 +602,81 @@ def main() -> None:
     args = _parse_args()
     outputs_dir = Path(args.outputs_dir)
     outputs_dir.mkdir(parents=True, exist_ok=True)
+
+    # ------------------------------------------------------------------
+    # Disabled-interaction method-validation control (Tier 2.B sanity rerun)
+    # ------------------------------------------------------------------
+    if args.disabled_interaction:
+        _log.info("=== Disabled-interaction method-validation control ===")
+        df_di = run_disabled_interaction_control(
+            rng_seed=args.rng_seed,
+            n_shuffles=args.n_shuffles,
+            seed=args.seed,
+        )
+        csv_path = outputs_dir / "disabled_interaction_null.csv"
+        df_di.to_csv(csv_path, index=False)
+        _log.info("Wrote %s", csv_path)
+
+        obs_row = df_di[df_di["kind"] == "observed"].iloc[0]
+        observed_phi = float(obs_row["phi_spectral_mean"])
+        surr_lo = float(obs_row["surrogate_95ci_lo"])
+        surr_hi = float(obs_row["surrogate_95ci_hi"])
+        z = float(obs_row["z_score"])
+        surr_mean = float(obs_row["surrogate_mean"])
+
+        within_ci = surr_lo <= observed_phi <= surr_hi
+        borderline = (not within_ci) and abs(z) <= 2.0
+
+        if within_ci:
+            verdict = "PASS"
+        elif borderline:
+            verdict = "BORDERLINE"
+        else:
+            verdict = "FAIL"
+
+        _log.info(
+            "Disabled-interaction verdict: %s  observed_phi=%.3f  "
+            "surrogate 95%% CI=[%.3f, %.3f]  z=%.2f",
+            verdict, observed_phi, surr_lo, surr_hi, z,
+        )
+
+        print(f"\n{'='*70}")
+        print(f"DISABLED-INTERACTION CONTROL: {verdict}")
+        print(f"  Observed Φ = {observed_phi:.3f}")
+        print(f"  Surrogate 95% CI = [{surr_lo:.3f}, {surr_hi:.3f}]")
+        print(f"  z = {z:.2f}")
+        print(f"{'='*70}\n")
+
+        if verdict == "PASS":
+            _update_readme_with_disabled_interaction(
+                outputs_dir=outputs_dir,
+                observed_phi=observed_phi,
+                surrogate_mean=surr_mean,
+                surr_lo=surr_lo,
+                surr_hi=surr_hi,
+                z=z,
+            )
+            print("README_summary.md updated. Surrogate method VALIDATED.")
+            print("Eight per-scenario nulls are interpretable. Ready to commit.")
+        elif verdict == "BORDERLINE":
+            print(
+                "BORDERLINE: observed within 2σ of surrogate mean but outside 95% CI. "
+                "Do NOT commit. Method probably works but scenario-level claims with "
+                "z-scores below ~3-4 should be treated with caution. Diagnose further."
+            )
+        else:
+            print(
+                "FAIL: disabled-interaction control observed Φ exceeds surrogate distribution. "
+                "Surrogate method has a systematic bias even on uncoupled telemetry. "
+                "Do NOT commit. The method requires investigation before per-scenario "
+                "observed > surrogate claims can be interpreted."
+            )
+            print(f"\nDiagnosis: observed={observed_phi:.3f}, surrogate mean={surr_mean:.3f}, "
+                  f"z={z:.2f}. Check for a scale or shape issue in circular_shift_telemetry "
+                  "or phi_spectral_over_windows for i.i.d. input telemetry.")
+
+        print(f"\nCSV written: {csv_path}")
+        return
 
     # Filter scenarios
     if args.scenarios:
