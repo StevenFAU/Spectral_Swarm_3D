@@ -56,6 +56,8 @@ _SCENARIO_REGISTRY: list[tuple[str, str, str]] = [
     ("none",               "jamming_sweep",      "alpha_1.0"),
     # 7 primary scenarios
     ("alignment_wa_1.8",   "alignment_sweep",    "wa_1.8"),
+    # +1 per Tier 1.C cross-sweep verdict: alignment w_a=0.6 confirmed §4.2 instance
+    ("alignment_wa_0.6",   "alignment_sweep",    "wa_0.6"),
     ("leadership_lam_1.6", "leadership_sweep",   "lambda_1.6"),
     ("jamming_alpha_0.2",  "jamming_sweep",      "alpha_0.2"),
     ("split_merge",        "split_merge_sweep",  "split_merge"),
